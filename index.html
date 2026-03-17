@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hybrid Monster">
+    <meta name="theme-color" content="#0D0D0D">
+    <title>Hybrid Monster Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0D0D0D;
+            color: #FFFFFF;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            padding-top: max(0px, env(safe-area-inset-top));
+            padding-left: max(0px, env(safe-area-inset-left));
+            padding-right: max(0px, env(safe-area-inset-right));
+            padding-bottom: max(0px, env(safe-area-inset-bottom));
+        }
+
+        #app {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 16px;
+            border-bottom: 1px solid #2D2D3F;
+            background: #0D0D0D;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            color: #999999;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Schedule View */
+        .schedule-view {
+            padding: 16px;
+            gap: 16px;
+        }
+
+        .phase-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .phase-btn {
+            padding: 12px 8px;
+            border: 2px solid #2D2D3F;
+            background: transparent;
+            color: #FFFFFF;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .phase-btn:active {
+            transform: scale(0.98);
+        }
+
+        .phase-btn.active {
+            border-color: currentColor;
+        }
+
+        .phase-btn[data-phase="1"] {
+            color: #0077B6;
+        }
+
+        .phase-btn[data-phase="1"].active {
+            background: #0077B6;
+            color: #FFFFFF;
+        }
+
+        .phase-btn[data-phase="2"] {
+            color: #F77F00;
+        }
+
+        .phase-btn[data-phase="2"].active {
+            background: #F77F00;
+            color: #FFFFFF;
+        }
+
+        .phase-btn[data-phase="3"] {
+            color: #E63946;
+        }
+
+        .phase-btn[data-phase="3"].active {
+            background: #E63946;
+            color: #FFFFFF;
+        }
+
+        .phase-info {
+            background: #1A1A2E;
+            border: 1px solid #2D2D3F;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .phase-info-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .phase-info-text {
+            color: #CCCCCC;
+        }
+
+        .day-cards {
+            display: grid;
+            gap: 12px;
+        }
+
+        .day-card {
+            background: #1A1A2E;
+            border: 1px solid #2D2D3F;
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .day-card:active {
+            transform: scale(0.98);
+            background: #2D2D3F;
+        }
+
+        .day-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .day-card-icon {
+            font-size: 20px;
+        }
+
+        .day-card-title {
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .day-card-tag {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            background: #2D2D3F;
+            color: #AAAAAA;
+        }
+
+        .day-card-desc {
+            font-size: 12px;
+            color: #999999;
+            margin-bottom: 8px;
+        }
+
+        .day-card-progress {
+            height: 4px;
+            background: #2D2D3F;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .day-card-progress-bar {
+            height: 100%;
+            background: #0077B6;
+            transition: width 0.3s, background-color 0.3s;
+            border-radius: 2px;
+        }
+
+        .day-card-progress-text {
+            font-size: 11px;
+            color: #999999;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        /* Workout View */
+        .workout-view {
+            padding: 0;
+        }
+
+        .workout-header {
+            padding: 16px;
+            border-bottom: 1px solid #2D2D3F;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: #FFFFFF;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: background 0.2s;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .back-btn:active {
+            background: #2D2D3F;
+        }
+
+        .workout-day-title {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .workout-day-name {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .workout-day-subtitle {
+            font-size: 12px;
+            color: #999999;
+            margin-top: 2px;
+        }
+
+        .workout-progress-bar {
+            width: 48px;
+            height: 4px;
+            background: #2D2D3F;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .workout-progress-bar-fill {
+            height: 100%;
+            background: #0077B6;
+            transition: width 0.3s, background-color 0.3s;
+            border-radius: 2px;
+        }
+
+        .workout-content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .exercise-card {
+            background: #1A1A2E;
+            border: 1px solid #2D2D3F;
+            border-radius: 12px;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        .exercise-header {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .exercise-note {
+            font-size: 11px;
+            color: #999999;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .exercise-sets {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .set-row {
+            display: grid;
+            grid-template-columns: 32px 1fr 80px 48px;
+            gap: 8px;
+            align-items: center;
+            background: #0D0D0D;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .set-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #2D2D3F;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .set-target {
+            font-size: 13px;
+            color: #CCCCCC;
+        }
+
+        .weight-input {
+            padding: 8px;
+            background: #2D2D3F;
+            border: 1px solid #2D2D3F;
+            border-radius: 6px;
+            color: #FFFFFF;
+            font-size: 13px;
+            outline: none;
+            -webkit-appearance: none;
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .weight-input:focus {
+            border-color: #0077B6;
+            background: #1A1A2E;
+        }
+
+        .set-done-btn {
+            width: 48px;
+            height: 32px;
+            border: 1.5px solid #2D2D3F;
+            background: transparent;
+            color: #999999;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .set-done-btn.done {
+            background: #0077B6;
+            border-color: #0077B6;
+            color: #FFFFFF;
+        }
+
+        .set-done-btn:active {
+            transform: scale(0.95);
+        }
+
+        .conditioning-card {
+            background: #1A1A2E;
+            border: 1px solid #2D2D3F;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 80px;
+        }
+
+        .conditioning-header {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .conditioning-description {
+            font-size: 12px;
+            color: #CCCCCC;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .conditioning-done-btn {
+            width: 100%;
+            padding: 12px;
+            border: 1.5px solid #2D2D3F;
+            background: transparent;
+            color: #999999;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .conditioning-done-btn.done {
+            background: #0077B6;
+            border-color: #0077B6;
+            color: #FFFFFF;
+        }
+
+        .conditioning-done-btn:active {
+            transform: scale(0.98);
+        }
+
+        .workout-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            background: #0D0D0D;
+            border-top: 1px solid #2D2D3F;
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1.5px solid #2D2D3F;
+            background: transparent;
+            color: #FFFFFF;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .nav-btn:active {
+            transform: scale(0.98);
+        }
+
+        .nav-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Scrollbar styling */
+        .content::-webkit-scrollbar,
+        .workout-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .content::-webkit-scrollbar-track,
+        .workout-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .content::-webkit-scrollbar-thumb,
+        .workout-content::-webkit-scrollbar-thumb {
+            background: #2D2D3F;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 320px) {
+            .set-row {
+                grid-template-columns: 28px 1fr 60px 40px;
+                gap: 6px;
+                padding: 6px;
+            }
+
+            .phase-btn {
+                font-size: 11px;
+                padding: 10px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <div class="header">
+                <div class="header-title">HYBRID MONSTER</div>
+                <div class="header-subtitle">12-WEEK PROGRAM</div>
+            </div>
+
+            <div class="content">
+                <!-- Schedule View -->
+                <div id="scheduleView" class="view active schedule-view">
+                    <div class="phase-selector" id="phaseSelector"></div>
+                    <div id="phaseInfo" class="phase-info">
+                        <div class="phase-info-title" id="phaseInfoTitle"></div>
+                        <div class="phase-info-text" id="phaseInfoText"></div>
+                    </div>
+                    <div class="day-cards" id="dayCards"></div>
+                </div>
+
+                <!-- Workout View -->
+                <div id="workoutView" class="view">
+                    <div class="workout-header">
+                        <button class="back-btn" id="backBtn">â</button>
+                        <div class="workout-day-title">
+                            <div class="workout-day-name" id="workoutDayName"></div>
+                            <div class="workout-day-subtitle" id="workoutDaySubtitle"></div>
+                        </div>
+                        <div class="workout-progress-bar">
+                            <div class="workout-progress-bar-fill" id="workoutProgressBar"></div>
+                        </div>
+                    </div>
+                    <div class="workout-content" id="workoutContent"></div>
+                    <div class="workout-footer">
+                        <button class="nav-btn" id="prevDayBtn">â Previous</button>
+                        <button class="nav-btn" id="nextDayBtn">Next â</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // WORKOUT DATA
+        // ============================================================================
+
+        const PHASES = {
+            1: {
+                name: 'Foundation',
+                weeks: '1-4',
+                color: '#0077B6',
+                rpe: '7-8',
+                description: 'Build volume tolerance, find working weights'
+            },
+            2: {
+                name: 'Intensification',
+                weeks: '5-8',
+                color: '#F77F00',
+                rpe: '8-9',
+                description: 'Dropsets, rest-pause, mechanical advantage'
+            },
+            3: {
+                name: 'Peak Performance',
+                weeks: '9-12',
+                color: '#E63946',
+                rpe: '9-10',
+                description: 'All intensity techniques, heaviest loads'
+            }
+        };
+
+        const DAYS = {
+            1: { name: 'Push A', icon: 'ðï¸', tag: 'STRENGTH', desc: 'Heavy Strength' },
+            2: { name: 'Pull A', icon: 'ðª', tag: 'STRENGTH', desc: 'Strength + Volume' },
+            3: { name: 'Legs', icon: 'ð¦µ', tag: 'LEGS', desc: 'Full Lower Body' },
+            4: { name: 'Push B', icon: 'ð¯', tag: 'HYPERTROPHY', desc: 'Hypertrophy' },
+            5: { name: 'Pull B + Arms', icon: 'ð¥', tag: 'ARMS', desc: 'Arms Focus' },
+            6: { name: 'Full Body', icon: 'ð¥', tag: 'CONDITIONING', desc: 'Conditioning + Long Run' }
+        };
+
+        const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+        const WORKOUTS = {
+            1: {
+                1: {
+                    exercises: [
+                        { name: 'Barbell Bench Press', sets: '4', reps: '10, 8, 6, 6', rest: '2-3 min', note: 'Pyramid up in weight each set' },
+                        { name: 'Barbell Overhead Press', sets: '4', reps: '10, 8, 6, 6', rest: '2-3 min', note: 'Strict form, no leg drive' },
+                        { name: 'Incline DB Press', sets: '3', reps: '12, 10, 8', rest: '90 sec', note: '30-45 degree incline' },
+                        { name: 'DB Lateral Raises', sets: '3', reps: '15, 12, 10', rest: '60 sec', note: 'Controlled tempo' },
+                        { name: 'Barbell Close-Grip Bench', sets: '3', reps: '12, 10, 8', rest: '90 sec', note: 'Hands shoulder width' },
+                        { name: 'DB Overhead Tricep Ext.', sets: '3', reps: '15, 12, 10', rest: '60 sec', note: 'Dropset on final set' }
+                    ],
+                    conditioning: { type: 'rower', description: 'ROWER â 8 rounds: 30 sec max effort / 60 sec easy paddle. Target: 140+ meters per sprint.' }
+                },
+                2: {
+                    exercises: [
+                        { name: 'Barbell Deadlift', sets: '4', reps: '10, 8, 6, 6', rest: '2-3 min', note: 'Conventional or sumo' },
+                        { name: 'Barbell Bent-Over Row', sets: '4', reps: '12, 10, 8, 8', rest: '90 sec', note: 'Overhand grip, chest to bar' },
+                        { name: 'DB Single-Arm Row', sets: '3', reps: '12, 10, 8', rest: '60 sec', note: 'Each arm. Full stretch' },
+                        { name: 'Pull-Ups', sets: '3', reps: 'Max reps', rest: '90 sec', note: 'Add weight if >12 reps' },
+                        { name: 'Barbell Curl', sets: '3', reps: '12, 10, 8', rest: '60 sec', note: 'Strict, no body English' },
+                        { name: 'DB Hammer Curl', sets: '3', reps: '15, 12, 10', rest: '60 sec', note: 'Alternating arms' },
+                        { name: 'Band Pull-Aparts', sets: '3', reps: '20', rest: '30 sec', note: 'Rear delt / posture' }
+                    ],
+                    conditioning: { type: 'run', description: 'EASY RUN â 30 min at conversational pace (Zone 2). ~9:00-9:30/mi.' }
+                },
+                3: {
+                    exercises: [
+                        { name: 'Barbell Back Squat', sets: '4', reps: '10, 8, 6, 6', rest: '2-3 min', note: 'Below parallel every rep' },
+                        { name: 'Barbell Romanian Deadlift', sets: '4', reps: '12, 10, 8, 8', rest: '90 sec', note: 'Hamstring stretch at bottom' },
+                        { name: 'DB Bulgarian Split Squat', sets: '3', reps: '12, 10, 8', rest: '60 sec', note: 'Each leg. Rear foot on bench' },
+                        { name: 'DB Walking Lunges', sets: '3', reps: '12 each leg', rest: '60 sec', note: 'Long stride, upright torso' },
+                        { name: 'Barbell Hip Thrust', sets: '3', reps: '15, 12, 10', rest: '60 sec', note: 'Pause 1 sec at top' },
+                        { name: 'Standing Calf Raises', sets: '4', reps: '20, 15, 15, 12', rest: '45 sec', note: 'Full ROM, pause at top' }
+                    ],
+                    conditioning: { type: 'rower', description: 'EMOM x 10 min â Odd: 10 DB thrusters. Even: 12/15 cal row.' }
+                },
+                4: {
+                    exercises: [
+                        { name: 'Incline Barbell Bench', sets: '4', reps: '12, 10, 8, 8', rest: '90 sec', note: 'Upper chest focus' },
+                        { name: 'DB Flat Bench Press', sets: '3', reps: '12, 10, 8', rest: '90 sec', note: 'Deep stretch at bottom' },
+                        { name: 'DB Floor Press', sets: '3', reps: '15, 12, 10', rest: '60 sec', note: 'Pause on floor each rep' },
+                        { name: 'DB Arnold Press', sets: '3', reps: '12, 10, 8', rest: '60 sec', note: 'Full rotation, controlled' },
+                        { name: 'DB Front Raise', sets: '3', reps: '15, 12, 10', rest: '45 sec', note: 'Alternating, thumbs up' },
+                        { name: 'DB Lateral Raise', sets: '3', reps: '15, 12, 10', rest: '45 sec', note: 'Dropset on final set' },
+                        { name: 'Bodyweight Dips', sets: '3', reps: 'Max reps', rest: '60 sec', note: 'Lean forward for chest' }
+                    ],
+                    conditioning: { type: 'run', description: 'TEMPO RUN â 5 min warmup + 20 min at ~7:30-8:00/mi + 5 min cooldown.' }
+                },
+                5: {
+                    exercises: [
+                        { name: 'Barbell Pendlay Row', sets: '4', reps: '10, 8, 6, 6', rest: '90 sec', note: 'Explosive from floor' },
+                        { name: 'Chin-Ups (Supinated)', sets: '3', reps: 'Max reps', rest: '90 sec', note: 'Add weight if >12' },
+                        { name: 'DB Rear Delt Fly', sets: '3', reps: '15, 12, 10', rest: '60 sec', note: 'Squeeze at top 1 sec' },
+                        { name: 'DB Shrugs', sets: '3', reps: '15, 12, 10', rest: '60 sec', note: 'Hold at top 2 sec' },
+                        { name: 'Barbell Curl (Wide)', sets: '3', reps: '12, 10, 8', rest: '60 sec', note: 'Strict, full ROM' },
+                        { name: 'DB Incline Curl', sets: '3', reps: '12, 10, 8', rest: '60 sec', note: 'Bench at 45Â°' },
+                        { name: 'DB Skull Crusher', sets: '3', reps: '12, 10, 8', rest: '60 sec', note: 'Lower to forehead' },
+                        { name: 'DB Kickback', sets: '3', reps: '15, 12, 10', rest: '45 sec', note: 'Squeeze at top' }
+                    ],
+                    conditioning: { type: 'rower', description: '4 rounds for time â 15 cal row + 10 burpees + 15 DB swings. Rest 60 sec.' }
+                },
+                6: {
+                    exercises: [
+                        { name: 'Barbell Front Squat', sets: '3', reps: '10, 8, 6', rest: '90 sec', note: 'Lighter, upright torso' },
+                        { name: 'Barbell Push Press', sets: '3', reps: '10, 8, 6', rest: '90 sec', note: 'Use leg drive' },
+                        { name: 'DB Renegade Row', sets: '3', reps: '8 each arm', rest: '60 sec', note: 'No hip rotation' },
+                        { name: 'DB Thruster', sets: '3', reps: '12', rest: '60 sec', note: 'Full squat into press' },
+                        { name: 'Rower Sprint', sets: '3', reps: '250m', rest: '60 sec', note: 'Max effort. Record time.' }
+                    ],
+                    conditioning: { type: 'run', description: 'LONG RUN â 40-50 min easy (Zone 2). Keep conversational.' }
+                }
+            },
+            2: {
+                1: {
+                    exercises: [
+                        { name: 'Barbell Bench Press', sets: '5', reps: '8, 6, 4, 4, 2', rest: '3 min', note: 'Build to heavy double' },
+                        { name: 'Barbell Overhead Press', sets: '4', reps: '8, 6, 4, 4', rest: '2-3 min', note: 'Heavier than Phase 1' },
+                        { name: 'Incline DB Press', sets: '3', reps: '10, 8, 6', rest: '90 sec', note: 'Dropset on final set' },
+                        { name: 'SS: Lat Raise + Front Raise', sets: '3', reps: '12 + 10', rest: '60 sec', note: 'No rest between' },
+                        { name: 'Close-Grip Floor Press', sets: '3', reps: '10, 8, 6', rest: '90 sec', note: 'Pause on floor' },
+                        { name: 'Overhead Ext. (band)', sets: '3', reps: '15, 12, 10', rest: '45 sec', note: 'Rest-pause final set' }
+                    ],
+                    conditioning: { type: 'rower', description: 'ROWER â 10 rounds: 20 sec all-out / 40 sec easy. Target: 100+ meters per sprint.' }
+                },
+                2: {
+                    exercises: [
+                        { name: 'Barbell Deadlift', sets: '5', reps: '8, 6, 4, 4, 2', rest: '3 min', note: 'Build to heavy double' },
+                        { name: 'Barbell Bent-Over Row', sets: '4', reps: '10, 8, 6, 6', rest: '90 sec', note: 'Heavier than Phase 1' },
+                        { name: 'DB Single-Arm Row', sets: '3', reps: '10, 8, 6', rest: '60 sec', note: 'Dropset on last set' },
+                        { name: 'Weighted Pull-Ups', sets: '4', reps: '8, 6, 4, 4', rest: '2 min', note: 'DB or weight belt' },
+                        { name: 'SS: BB Curl + Hammer Curl', sets: '3', reps: '10 + 10', rest: '60 sec', note: 'No rest between' },
+                        { name: 'Face Pulls (Band)', sets: '3', reps: '20, 15, 15', rest: '30 sec', note: 'Rear delts + ext. rotation' }
+                    ],
+                    conditioning: { type: 'run', description: 'EASY RUN â 30-35 min at Zone 2.' }
+                },
+                3: {
+                    exercises: [
+                        { name: 'Barbell Back Squat', sets: '5', reps: '8, 6, 4, 4, 2', rest: '3 min', note: 'Build to heavy double' },
+                        { name: 'Barbell Romanian Deadlift', sets: '4', reps: '10, 8, 6, 6', rest: '90 sec', note: 'Heavier than Phase 1' },
+                        { name: 'Barbell Front Squat', sets: '3', reps: '10, 8, 6', rest: '90 sec', note: 'Pause 2 sec in hole' },
+                        { name: 'DB Bulgarian Split Squat', sets: '3', reps: '10, 8, 8', rest: '60 sec', note: 'Dropset final set' },
+                        { name: 'Barbell Hip Thrust', sets: '4', reps: '12, 10, 8, 6', rest: '60 sec', note: 'Heavy. Pause at top' },
+                        { name: 'Standing Calf Raise', sets: '4', reps: '20, 15, 12, 10', rest: '45 sec', note: 'Dropset final set' }
+                    ],
+                    conditioning: { type: 'rower', description: 'Tabata rower: 8 rounds 20 sec on / 10 sec off. Then 3 x 20 DB jump squats.' }
+                },
+                4: {
+                    exercises: [
+                        { name: 'Incline Barbell Bench', sets: '4', reps: '10, 8, 6, 6', rest: '90 sec', note: 'Heavier than Phase 1' },
+                        { name: 'DB Flat â Mech. Dropset', sets: '3', reps: '8 flat+8 inc+8 floor', rest: '90 sec', note: 'Same DBs, change angle' },
+                        { name: 'DB Squeeze Press', sets: '3', reps: '15, 12, 10', rest: '60 sec', note: 'DBs together, squeeze' },
+                        { name: 'DB Arnold Press', sets: '3', reps: '10, 8, 6', rest: '60 sec', note: 'Dropset on final set' },
+                        { name: 'SS: Lat Raise + Bus Drivers', sets: '3', reps: '12 + 10', rest: '45 sec', note: 'Constant tension' },
+                        { name: 'Weighted Dips', sets: '3', reps: '10, 8, 6', rest: '60 sec', note: 'DB between feet' },
+                        { name: 'DB Tate Press', sets: '3', reps: '15, 12, 10', rest: '45 sec', note: 'Lower to chest' }
+                    ],
+                    conditioning: { type: 'run', description: 'TEMPO RUN â 5 min warmup + 25 min at ~7:15-7:45/mi + 5 min cooldown.' }
+                },
+                5: {
+                    exercises: [
+                        { name: 'Barbell Pendlay Row', sets: '4', reps: '8, 6, 4, 4', rest: '2 min', note: 'Heavier, explosive' },
+                        { name: 'Weighted Chin-Ups', sets: '4', reps: '8, 6, 4, 4', rest: '2 min', note: 'Supinated grip' },
+                        { name: 'SS: Rear Fly + Shrugs', sets: '3', reps: '12 + 12', rest: '60 sec', note: 'Same DBs' },
+                        { name: 'Barbell Curl â 21s', sets: '3', reps: '21 (7+7+7)', rest: '90 sec', note: 'Lower, upper, full ROM' },
+                        { name: 'DB Incline Curl', sets: '3', reps: '10, 8, 6', rest: '60 sec', note: 'Rest-pause final set' },
+                        { name: 'Close-Grip Floor Press', sets: '3', reps: '10, 8, 6', rest: '90 sec', note: 'Tricep focus' },
+                        { name: 'DB Overhead Extension', sets: '3', reps: '12, 10, 8', rest: '60 sec', note: 'Dropset final set' }
+                    ],
+                    conditioning: { type: 'rower', description: '5 rounds for time â 8 hang cleans + 10 push-ups + 250m row. Target: sub-12 min.' }
+                },
+                6: {
+                    exercises: [
+                        { name: 'BB Complex: DLâCleanâFSâPP', sets: '5', reps: '5 each', rest: '2 min', note: 'Don\'t put bar down' },
+                        { name: 'DB Man Makers', sets: '3', reps: '8', rest: '90 sec', note: 'Pushup+row+clean+press' },
+                        { name: 'Rower Sprint', sets: '3', reps: '500m', rest: '90 sec', note: 'All-out. Record time.' },
+                        { name: 'DB Farmer Carry', sets: '3', reps: '40m', rest: '60 sec', note: 'Heavy as possible' }
+                    ],
+                    conditioning: { type: 'run', description: 'LONG RUN â 45-55 min easy (Zone 2).' }
+                }
+            },
+            3: {
+                1: {
+                    exercises: [
+                        { name: 'Barbell Bench Press', sets: '5', reps: '5, 3, 2, 1, 1', rest: '3-4 min', note: 'Build to heavy single' },
+                        { name: 'Barbell OHP', sets: '4', reps: '6, 4, 2, 2', rest: '3 min', note: 'Strict. Heavy.' },
+                        { name: 'Incline DB â Dropset', sets: '3', reps: '8, then drop x2', rest: '2 min', note: 'Triple dropset' },
+                        { name: 'GS: Lat/Front/Rear', sets: '3', reps: '12+10+12', rest: '90 sec', note: 'No rest between' },
+                        { name: 'CGBP â Rest Pause', sets: '3', reps: '8,(10s),max,(10s),max', rest: '2 min', note: 'Rest-pause clusters' },
+                        { name: 'DB Overhead Ext.', sets: '2', reps: '20, 15', rest: '45 sec', note: 'Pump finisher' }
+                    ],
+                    conditioning: { type: 'rower', description: 'ROWER â 12 rounds: 15 sec max sprint / 45 sec easy. Track total meters.' }
+                },
+                2: {
+                    exercises: [
+                        { name: 'Barbell Deadlift', sets: '5', reps: '5, 3, 2, 1, 1', rest: '3-4 min', note: 'Build to heavy single' },
+                        { name: 'Barbell Row', sets: '4', reps: '8, 6, 4, 4', rest: '2 min', note: 'Heavy, body English OK' },
+                        { name: 'Weighted Pull-Ups', sets: '4', reps: '6, 4, 3, 2', rest: '2 min', note: 'Max weight' },
+                        { name: 'DB Row â Dropset', sets: '3', reps: '8, drop x2', rest: '90 sec', note: 'Triple dropset each arm' },
+                        { name: 'SS: BB Curl 21s + Hammer', sets: '3', reps: '21 + 12', rest: '90 sec', note: 'Arm destroyer' },
+                        { name: 'Band Pull-Aparts', sets: '3', reps: '25', rest: '30 sec', note: 'Rear delt pump' }
+                    ],
+                    conditioning: { type: 'run', description: 'EASY RUN â 35 min at Zone 2.' }
+                },
+                3: {
+                    exercises: [
+                        { name: 'Barbell Back Squat', sets: '5', reps: '5, 3, 2, 1, 1', rest: '3-4 min', note: 'Build to heavy single' },
+                        { name: 'Barbell RDL', sets: '4', reps: '8, 6, 4, 4', rest: '2 min', note: 'Heavy, full stretch' },
+                        { name: 'DB Bulgarian Split Squat', sets: '3', reps: '8 each leg', rest: '60 sec', note: 'Heavy, controlled' },
+                        { name: 'Barbell Hip Thrust', sets: '4', reps: '10, 8, 6, 6', rest: '90 sec', note: 'Heaviest loads yet' },
+                        { name: 'GS: Lunges+Jumps+Calves', sets: '3', reps: '10+10+20', rest: '90 sec', note: 'Leg destruction' }
+                    ],
+                    conditioning: { type: 'rower', description: 'DEATH BY ROWER â Min 1: 100m. Min 2: 150m. Min 3: 200m... +50m until failure.' }
+                },
+                4: {
+                    exercises: [
+                        { name: 'Incline Barbell Bench', sets: '4', reps: '8, 6, 4, 4', rest: '2 min', note: 'Heavy incline' },
+                        { name: 'DB Flat â Mech. Drop', sets: '3', reps: '6 flat+6 inc+max floor', rest: '2 min', note: 'Same heavy DBs' },
+                        { name: 'DB Squeeze Press', sets: '3', reps: '12, 10, 8', rest: '60 sec', note: 'Dropset last set' },
+                        { name: 'DB Arnold Press', sets: '3', reps: '8, 6, 6', rest: '90 sec', note: 'Rest-pause last set' },
+                        { name: 'SS: Lat Raise + Bus Drivers', sets: '4', reps: '15 + 10', rest: '45 sec', note: 'Shoulder cap destroyer' },
+                        { name: 'Weighted Dips', sets: '3', reps: '8, 6, max BW', rest: '60 sec', note: 'Drop weight, rep out' }
+                    ],
+                    conditioning: { type: 'run', description: 'TEMPO RUN â 5 min warmup + 30 min at ~7:00-7:30/mi + 5 min cooldown.' }
+                },
+                5: {
+                    exercises: [
+                        { name: 'Barbell Row â Rest Pause', sets: '4', reps: '6,(10s),max,(10s),max', rest: '2 min', note: 'Heavy top sets' },
+                        { name: 'Weighted Chin-Ups', sets: '4', reps: '6, 4, 3, max BW', rest: '2 min', note: 'Strip weight last' },
+                        { name: 'GS: Rear Fly+Shrug+Face Pull', sets: '3', reps: '12+12+15', rest: '90 sec', note: 'Upper back pump' },
+                        { name: 'Barbell Curl â Dropset', sets: '3', reps: '8, drop x2', rest: '90 sec', note: 'Strip weight twice' },
+                        { name: 'DB Incline Curl', sets: '3', reps: '8, 8, max', rest: '60 sec', note: 'Rest-pause last set' },
+                        { name: 'CGBP', sets: '3', reps: '8, 6, 4', rest: '90 sec', note: 'Heavy tricep work' },
+                        { name: 'DB Skull Crusher â Drop', sets: '2', reps: '10, drop x2', rest: '60 sec', note: 'Finisher. To failure.' }
+                    ],
+                    conditioning: { type: 'rower', description: '6 rounds â 5 power cleans + 10 push-ups + 250m row. Target: sub-15 min.' }
+                },
+                6: {
+                    exercises: [
+                        { name: 'Bear Complex: Clean+FS+PP+BS+BTN', sets: '5', reps: '3 each', rest: '2 min', note: 'No release.' },
+                        { name: 'DB Man Makers', sets: '4', reps: '8', rest: '90 sec', note: 'Heavier than Phase 2' },
+                        { name: 'Rower Sprint', sets: '3', reps: '500m', rest: '90 sec', note: 'Beat Phase 2 times' },
+                        { name: 'DB Farmer Carry', sets: '3', reps: '60m', rest: '60 sec', note: 'Max weight' }
+                    ],
+                    conditioning: { type: 'run', description: 'LONG RUN â 50-60 min easy (Zone 2). Peak endurance.' }
+                }
+            }
+        };
+
+        // ============================================================================
+        // STATE MANAGEMENT
+        // ============================================================================
+
+        let state = {
+            currentPhase: 1,
+            currentDay: 1,
+            view: 'schedule',
+            weights: {},
+            done: {},
+            cond: {}
+        };
+
+        function loadState() {
+            const weights = localStorage.getItem('hm_weights');
+            const done = localStorage.getItem('hm_done');
+            const cond = localStorage.getItem('hm_cond');
+
+            if (weights) state.weights = JSON.parse(weights);
+            if (done) state.done = JSON.parse(done);
+            if (cond) state.cond = JSON.parse(cond);
+        }
+
+        function saveState() {
+            localStorage.setItem('hm_weights', JSON.stringify(state.weights));
+            localStorage.setItem('hm_done', JSON.stringify(state.done));
+            localStorage.setItem('hm_cond', JSON.stringify(state.cond));
+        }
+
+        function getWeightKey(phase, day, exerciseIndex, setIndex) {
+            return `${phase}-${day}-${exerciseIndex}-${setIndex}`;
+        }
+
+        function getDoneKey(phase, day, exerciseIndex, setIndex) {
+            return `${phase}-${day}-${exerciseIndex}-${setIndex}`;
+        }
+
+        function getCondKey(phase, day) {
+            return `${phase}-${day}`;
+        }
+
+        function calculateDayProgress(phase, day) {
+            const workout = WORKOUTS[phase][day];
+            if (!workout) return 0;
+
+            let totalSets = 0;
+            let doneSets = 0;
+
+            workout.exercises.forEach((ex, exIdx) => {
+                const setCount = parseInt(ex.sets) || 0;
+                totalSets += setCount;
+
+                for (let setIdx = 0; setIdx < setCount; setIdx++) {
+                    const key = getDoneKey(phase, day, exIdx, setIdx);
+                    if (state.done[key]) doneSets++;
+                }
+            });
+
+            const condKey = getCondKey(phase, day);
+            const condDone = state.cond[condKey] ? 1 : 0;
+
+            return totalSets + 1 > 0 ? (doneSets + condDone) / (totalSets + 1) : 0;
+        }
+
+        // ============================================================================
+        // SCHEDULE VIEW
+        // ============================================================================
+
+        function renderScheduleView() {
+            const phaseSelector = document.getElementById('phaseSelector');
+            phaseSelector.innerHTML = '';
+
+            for (let i = 1; i <= 3; i++) {
+                const btn = document.createElement('button');
+                btn.className = `phase-btn ${state.currentPhase === i ? 'active' : ''}`;
+                btn.dataset.phase = i;
+                btn.textContent = `Phase ${i}`;
+                btn.addEventListener('click', () => selectPhase(i));
+                phaseSelector.appendChild(btn);
+            }
+
+            const phase = PHASES[state.currentPhase];
+            document.getElementById('phaseInfoTitle').textContent = `${phase.name} (Weeks ${phase.weeks})`;
+            document.getElementById('phaseInfoText').textContent = phase.description;
+
+            const dayCards = document.getElementById('dayCards');
+            dayCards.innerHTML = '';
+
+            for (let day = 1; day <= 6; day++) {
+                const dayData = DAYS[day];
+                const progress = calculateDayProgress(state.currentPhase, day);
+                const progressPercent = Math.round(progress * 100);
+
+                const card = document.createElement('div');
+                card.className = 'day-card';
+                card.addEventListener('click', () => openWorkout(day));
+
+                const dayOfWeek = WEEKDAYS[day - 1];
+
+                card.innerHTML = `
+                    <div class="day-card-header">
+                        <div class="day-card-icon">${dayData.icon}</div>
+                        <div class="day-card-title">${dayOfWeek} â¢ ${dayData.name}</div>
+                        <div class="day-card-tag">${dayData.tag}</div>
+                    </div>
+                    <div class="day-card-desc">${dayData.desc}</div>
+                    <div class="day-card-progress">
+                        <div class="day-card-progress-bar" style="width: ${progressPercent}%; background-color: ${phase.color}"></div>
+                    </div>
+                    <div class="day-card-progress-text">${progressPercent}% Complete</div>
+                `;
+
+                dayCards.appendChild(card);
+            }
+        }
+
+        function selectPhase(phase) {
+            state.currentPhase = phase;
+            renderScheduleView();
+        }
+
+        function openWorkout(day) {
+            state.currentDay = day;
+            state.view = 'workout';
+            showView('workoutView');
+            renderWorkoutView();
+        }
+
+        // ============================================================================
+        // WORKOUT VIEW
+        // ============================================================================
+
+        function renderWorkoutView() {
+            const dayData = DAYS[state.currentDay];
+            const phase = PHASES[state.currentPhase];
+            const workout = WORKOUTS[state.currentPhase][state.currentDay];
+
+            document.getElementById('workoutDayName').textContent = dayData.name;
+            document.getElementById('workoutDaySubtitle').textContent = dayData.desc;
+
+            const progress = calculateDayProgress(state.currentPhase, state.currentDay);
+            const progressPercent = Math.round(progress * 100);
+            document.getElementById('workoutProgressBar').style.width = progressPercent + '%';
+            document.getElementById('workoutProgressBar').style.backgroundColor = phase.color;
+
+            const content = document.getElementById('workoutContent');
+            content.innerHTML = '';
+
+            // Render exercises
+            workout.exercises.forEach((exercise, exIdx) => {
+                const card = document.createElement('div');
+                card.className = 'exercise-card';
+
+                const header = document.createElement('div');
+                header.className = 'exercise-header';
+                header.textContent = exercise.name;
+                card.appendChild(header);
+
+                if (exercise.note) {
+                    const note = document.createElement('div');
+                    note.className = 'exercise-note';
+                    note.textContent = exercise.note;
+                    card.appendChild(note);
+                }
+
+                const setsContainer = document.createElement('div');
+                setsContainer.className = 'exercise-sets';
+
+                const repsArray = exercise.reps.split(',').map(r => r.trim());
+                const setCount = parseInt(exercise.sets) || 0;
+
+                for (let setIdx = 0; setIdx < setCount; setIdx++) {
+                    const targetReps = repsArray[setIdx] || repsArray[repsArray.length - 1];
+                    const key = getWeightKey(state.currentPhase, state.currentDay, exIdx, setIdx);
+                    const doneKey = getDoneKey(state.currentPhase, state.currentDay, exIdx, setIdx);
+                    const weight = state.weights[key] || '';
+                    const isDone = state.done[doneKey] || false;
+
+                    const row = document.createElement('div');
+                    row.className = 'set-row';
+
+                    const setNum = document.createElement('div');
+                    setNum.className = 'set-number';
+                    setNum.textContent = (setIdx + 1);
+
+                    const target = document.createElement('div');
+                    target.className = 'set-target';
+                    target.textContent = targetReps;
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'weight-input';
+                    input.placeholder = 'lbs';
+                    input.value = weight;
+                    input.inputMode = 'decimal';
+                    input.addEventListener('blur', () => {
+                        state.weights[key] = input.value;
+                        saveState();
+                    });
+
+                    const doneBtn = document.createElement('button');
+                    doneBtn.className = `set-done-btn ${isDone ? 'done' : ''}`;
+                    doneBtn.textContent = isDone ? 'â' : '';
+                    doneBtn.addEventListener('click', () => {
+                        state.done[doneKey] = !state.done[doneKey];
+                        saveState();
+                        renderWorkoutView();
+                    });
+
+                    row.appendChild(setNum);
+                    row.appendChild(target);
+                    row.appendChild(input);
+                    row.appendChild(doneBtn);
+
+                    setsContainer.appendChild(row);
+                }
+
+                card.appendChild(setsContainer);
+                content.appendChild(card);
+            });
+
+            // Render conditioning
+            const cond = workout.conditioning;
+            const condCard = document.createElement('div');
+            condCard.className = 'conditioning-card';
+
+            const condHeader = document.createElement('div');
+            condHeader.className = 'conditioning-header';
+            condHeader.innerHTML = `${cond.type === 'rower' ? 'ðï¸' : 'ð'} ${cond.type.toUpperCase()}`;
+            condCard.appendChild(condHeader);
+
+            const condDesc = document.createElement('div');
+            condDesc.className = 'conditioning-description';
+            condDesc.textContent = cond.description;
+            condCard.appendChild(condDesc);
+
+            const condKey = getCondKey(state.currentPhase, state.currentDay);
+            const condDone = state.cond[condKey] || false;
+
+            const condBtn = document.createElement('button');
+            condBtn.className = `conditioning-done-btn ${condDone ? 'done' : ''}`;
+            condBtn.textContent = condDone ? 'â Completed' : 'Mark Complete';
+            condBtn.addEventListener('click', () => {
+                state.cond[condKey] = !state.cond[condKey];
+                saveState();
+                renderWorkoutView();
+            });
+            condCard.appendChild(condBtn);
+
+            content.appendChild(condCard);
+        }
+
+        function previousDay() {
+            if (state.currentDay > 1) {
+                state.currentDay--;
+                renderWorkoutView();
+            }
+        }
+
+        function nextDay() {
+            if (state.currentDay < 6) {
+                state.currentDay++;
+                renderWorkoutView();
+            }
+        }
+
+        // ============================================================================
+        // VIEW MANAGEMENT
+        // ============================================================================
+
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        function goBack() {
+            state.view = 'schedule';
+            showView('scheduleView');
+            renderScheduleView();
+        }
+
+        // ============================================================================
+        // EVENT LISTENERS
+        // ============================================================================
+
+        document.getElementById('backBtn').addEventListener('click', goBack);
+        document.getElementById('prevDayBtn').addEventListener('click', previousDay);
+        document.getElementById('nextDayBtn').addEventListener('click', nextDay);
+
+        // Update nav button disabled states
+        function updateNavButtons() {
+            const prevBtn = document.getElementById('prevDayBtn');
+            const nextBtn = document.getElementById('nextDayBtn');
+
+            if (state.currentDay === 1) {
+                prevBtn.classList.add('disabled');
+            } else {
+                prevBtn.classList.remove('disabled');
+            }
+
+            if (state.currentDay === 6) {
+                nextBtn.classList.add('disabled');
+            } else {
+                nextBtn.classList.remove('disabled');
+            }
+        }
+
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+
+        function init() {
+            loadState();
+            renderScheduleView();
+
+            // Observe view changes to update nav buttons
+            const observer = new MutationObserver(() => {
+                if (state.view === 'workout') {
+                    updateNavButtons();
+                }
+            });
+
+            observer.observe(document.getElementById('workoutContent'), {
+                childList: true,
+                subtree: true
+            });
+
+            updateNavButtons();
+        }
+
+        init();
+    </script>
+</body>
+</html>
